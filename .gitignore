@@ -1,0 +1,5 @@
+__pycache__
+edge_env
+models/*
+output_video.mp4
+!models/.gitkeep
