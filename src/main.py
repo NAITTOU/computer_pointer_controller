@@ -15,6 +15,7 @@ from input_feeder import InputFeeder
 from face_detection import FaceDetection
 from head_pose_estimation import HeadPoseEstimation
 from facial_landmarks_detection import FacialLandmarksDetection
+from gaze_estimation import GazeEstimation
 
 log.getLogger().setLevel(log.INFO)
 
@@ -30,7 +31,9 @@ def build_argparser():
     parser.add_argument("-hp", "--hp_model", required=True, type=str,
                         help="Path to the Head Pose Estimation model.")
     parser.add_argument("-fl", "--fl_model", required=True, type=str,
-                        help="Path to the facial landmarks detection model.")
+                        help="Path to the Facial Landmarks Detection model.")
+    parser.add_argument("-ge", "--ge_model", required=True, type=str,
+                        help="Path to the Gaze Estimation model.")
     parser.add_argument("-it", "--input_type", required=True, type=str,
                         help="The type of input. Can be 'video' for video .\
                         file, 'image' for image file,or 'cam' to use webcam feed")
@@ -61,14 +64,18 @@ def infer_on_stream(args):
     face_detection_model = FaceDetection(args.fd_model)
     face_detection_model.load_model()
 
-    # Loading Head Pose Estimation
+    # Loading Head Pose Estimation model
     Head_PoseEstimation_model = HeadPoseEstimation(args.hp_model)
     Head_PoseEstimation_model.load_model()
 
-    # Loading facial landmarks detection
+    # Loading Facial Landmarks Detection model
     LandmarksDetection_model = FacialLandmarksDetection(args.fl_model)
     LandmarksDetection_model.load_model()
-    
+
+    # Loading Gaze Estimation
+    GazeEstimation_model = GazeEstimation(args.ge_model)
+    GazeEstimation_model.load_model()
+
     feed=InputFeeder(input_type, input_file)
     feed.load_data()
     initial_h, initial_w, video_len, fps = feed.getCapInfo()
@@ -82,18 +89,33 @@ def infer_on_stream(args):
         faced_coord = face_detection_model.preprocess_output(faced_outputs,threshold)
         cropped_face = face_detection_model.getFaceCrop(faced_coord)
 
-        # Running inference on Face Detection model to get head pose angle
+        # Running inference on Head Pose Estimation model to get head pose angle
         headp_pframe = Head_PoseEstimation_model.preprocess_input(cropped_face)
         headp_outputs = Head_PoseEstimation_model.predict(headp_pframe)
-        headp_coords = Head_PoseEstimation_model.preprocess_output(headp_outputs)
+        headp_coord = Head_PoseEstimation_model.preprocess_output(headp_outputs)
 
-        # Running inference on facial landmarks detectiono model
+        # Running inference on Facial Landmarks Detection model
         #  to get cropped left and right eye
         facial_pframe = LandmarksDetection_model.preprocess_input(cropped_face)
         facial_outputs = LandmarksDetection_model.predict(facial_pframe)
         facial_coords = LandmarksDetection_model.preprocess_output(facial_outputs)
         left_eye_coord, right_eye_coord, left_eye_cropped, right_eye_cropped = \
             LandmarksDetection_model.getEyesCrop(facial_coords)
+
+        # Running inference Gaze Estimation model
+        #  to get the coordinates of gaze direction vector
+        gase_inputs={
+
+          "left_eye_image" : left_eye_cropped,
+          "right_eye_image" : right_eye_cropped,
+          "head_pose_angles" : headp_coord
+
+        }
+        gase_pframes = GazeEstimation_model.preprocess_input(gase_inputs)
+        gase_outputs = GazeEstimation_model.predict(gase_pframes)
+        gaze_coord = GazeEstimation_model.preprocess_output(gase_outputs)
+
+ 
 
         cv2.rectangle(batch, (faced_coord[0] , faced_coord[1]), \
             (faced_coord[2], faced_coord[3]),(0,0,255), 1)
