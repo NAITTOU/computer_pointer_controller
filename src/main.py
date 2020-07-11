@@ -13,6 +13,7 @@ import numpy as np
 from argparse import ArgumentParser
 from input_feeder import InputFeeder
 from face_detection import FaceDetection
+from head_pose_estimation import HeadPoseEstimation
 
 log.getLogger().setLevel(log.INFO)
 
@@ -24,7 +25,9 @@ def build_argparser():
     """
     parser = ArgumentParser()
     parser.add_argument("-fd", "--fd_model", required=True, type=str,
-                        help="Path to the face detection model.")
+                        help="Path to the Face Detection model.")
+    parser.add_argument("-hp", "--hp_model", required=True, type=str,
+                        help="Path to Head Pose Estimation model.")
     parser.add_argument("-it", "--input_type", required=True, type=str,
                         help="The type of input. Can be 'video' for video .\
                         file, 'image' for image file,or 'cam' to use webcam feed")
@@ -51,9 +54,11 @@ def infer_on_stream(args):
     input_file = args.input
     threshold = args.prob_threshold
 
-    print(args.fd_model)
     face_detection_model = FaceDetection(args.fd_model)
     face_detection_model.load_model()
+
+    Head_PoseEstimation_model = HeadPoseEstimation(args.hp_model)
+    Head_PoseEstimation_model.load_model()
     
     feed=InputFeeder(input_type, input_file)
     feed.load_data()
@@ -68,14 +73,18 @@ def infer_on_stream(args):
 
         fd_pframe = face_detection_model.preprocess_input(batch)
         fd_outputs = face_detection_model.predict(fd_pframe)
-        fd_coords = face_detection_model.preprocess_output(fd_outputs,threshold)
-        for fd_coord in fd_coords:
-            xmin = int(fd_coord[0] * initial_w)
-            ymin = int(fd_coord[1] * initial_h)
-            xmax = int(fd_coord[2] * initial_w)
-            ymax = int(fd_coord[3] * initial_h)
-            fd_batch = batch[ymin:ymax, xmin:xmax]
+        fd_coord = face_detection_model.preprocess_output(fd_outputs,threshold)
+        print(fd_coord)
+        xmin = int(fd_coord[0] * initial_w)
+        ymin = int(fd_coord[1] * initial_h)
+        xmax = int(fd_coord[2] * initial_w)
+        ymax = int(fd_coord[3] * initial_h)
+        fd_batch = batch[ymin:ymax, xmin:xmax]
 
+        hp_pframe = Head_PoseEstimation_model.preprocess_input(fd_batch)
+        hp_outputs = Head_PoseEstimation_model.predict(hp_pframe)
+        hp_coords = Head_PoseEstimation_model.preprocess_output(hp_outputs)
+ 
         out_video.write(cv2.resize(fd_batch, (300, 400)))
 
     out_video.release()

@@ -130,24 +130,25 @@ class FaceDetection:
             
         return p_frame
 
-    def preprocess_output(self, outputs, threshold):
+    def preprocess_output(self, outputs, threshold=None):
         '''
         Before feeding the output of this model to the next model,
         you might have to preprocess the output. This function is where you can do that.
         '''
-        coords = []
+        prevconf = 0 
         for box in outputs[0][0]:
             conf = box[2]
-            Class_id = box[1]
+            if prevconf > conf:
+                continue
+            else:
+                prevconf = conf
 
             if conf >= threshold :
-                log.info(box)
                 xmin = box[3]
                 ymin = box[4]
                 xmax = box[5]
                 ymax = box[6]
             
                 coord = [xmin,ymin,xmax,ymax]
-                coords.append(coord)
         
-        return coords
+        return coord
