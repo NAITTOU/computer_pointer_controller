@@ -118,6 +118,10 @@ class FaceDetection:
         Before feeding the data into the model for inference,
         you might have to preprocess it. This function is where you can do that.
         '''
+        
+        self.img = image
+        self.img_w = image.shape[1]
+        self.img_h = image.shape[0]
         try:
             
             p_frame = cv2.resize(image, (self.input_shape[3], self.input_shape[2]))
@@ -144,11 +148,25 @@ class FaceDetection:
                 prevconf = conf
 
             if conf >= threshold :
-                xmin = box[3]
-                ymin = box[4]
-                xmax = box[5]
-                ymax = box[6]
+
+                xmin = int(box[3] * self.img_w)
+                ymin = int(box[4] * self.img_h)
+                xmax = int(box[5] * self.img_w)
+                ymax = int(box[6] * self.img_h)
             
                 coord = [xmin,ymin,xmax,ymax]
         
         return coord
+
+    def getFaceCrop(self, coord):
+        '''
+        Return Face cropped image.
+        '''
+        
+        xmin = coord[0] 
+        ymin = coord[1]
+        xmax = coord[2]
+        ymax = coord[3]
+        cropped_face = self.img[ymin:ymax, xmin:xmax]
+
+        return cropped_face
