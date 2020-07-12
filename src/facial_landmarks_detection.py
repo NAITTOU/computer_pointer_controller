@@ -151,10 +151,10 @@ class FacialLandmarksDetection:
         '''
         Return Left and right eye cropped images and their coordinates.
         '''
-        left_eye_coord = [ int(coords[0]-30) , int(coords[1]-30), 
-            int(coords[0]+30) , int(coords[1]+30) ]
-        right_eye_coord =  [ int(coords[2]-30) , int(coords[3]-30),
-            int(coords[2]+30) , int(coords[3]+30) ]
+        left_eye_coord = [ abs(int(coords[0]-30)) , abs(int(coords[1]-30)), 
+            abs(int(coords[0]+30)) , abs(int(coords[1]+30)) ]
+        right_eye_coord =  [ abs(int(coords[2]-30)) , abs(int(coords[3]-30)),
+            abs(int(coords[2]+30)) , abs(int(coords[3]+30)) ]
 
         left_eye_cropped = self.img[ left_eye_coord[1]:left_eye_coord[3],
             left_eye_coord[0]:left_eye_coord[2] ]

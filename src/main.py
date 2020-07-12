@@ -16,6 +16,7 @@ from face_detection import FaceDetection
 from head_pose_estimation import HeadPoseEstimation
 from facial_landmarks_detection import FacialLandmarksDetection
 from gaze_estimation import GazeEstimation
+from mouse_controller import MouseController
 
 log.getLogger().setLevel(log.INFO)
 
@@ -52,13 +53,90 @@ def build_argparser():
     parser.add_argument("-pt", "--prob_threshold", type=float, default=0.5,
                         help="Probability threshold for detections filtering"
                         "(0.5 by default)")
+    parser.add_argument("-pi", "--print_output", type=str, default="N",
+                        help="Show output of intermediate models for visualization"
+                        " if yes type 'Y' ,'N' instead ")
     return parser
+
+def DisplayOutputs(
+    batch, cropped_face, left_eye_cropped,
+    right_eye_cropped, headp_coord, faced_coord,
+    left_eye_coord, right_eye_coord, gaze_coord,Print_flag):
+        
+        if Print_flag.lower() == "y" :
+
+            cropped_face = cv2.resize(cropped_face, (300, 300))
+            left_eye_cropped = cv2.resize(left_eye_cropped, (150, 150))
+            right_eye_cropped = cv2.resize(right_eye_cropped, (150, 150)) 
+            face_xy = cropped_face.shape[0]
+            eyes_xy = right_eye_cropped.shape[0]
+            y_unit = 40
+            x_unit = 10
+            
+            fdLabelPosY = y_unit
+            fdLabelPosX = x_unit
+            cv2.putText(batch,"Face detection model output : ", (fdLabelPosX, fdLabelPosY), \
+                cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0,0,255), 2)
+
+            faceStartpPosY = fdLabelPosY+y_unit
+            faceStartpPosX = x_unit
+            faceEndpPosY = faceStartpPosY+face_xy
+            faceEndpPosX = faceStartpPosX+face_xy
+            batch[faceStartpPosY:faceEndpPosY, faceStartpPosX:faceEndpPosX] \
+                = cropped_face
+
+            flLabelPosY = faceEndpPosY+y_unit
+            flLabelPosX = x_unit
+            cv2.putText(batch,"Facial Landmarks Detection model output : ", (flLabelPosX, flLabelPosY), \
+                cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0,255,0), 2)
+            LeftStartpPosY = flLabelPosY+y_unit
+            LeftStartpPosX = x_unit
+            LeftEndpPosY = LeftStartpPosY+eyes_xy
+            LeftEndpPosX = LeftStartpPosX+eyes_xy
+            batch[LeftStartpPosY:LeftEndpPosY, LeftStartpPosX:LeftEndpPosX] = left_eye_cropped
+
+            RightStartpPosY = flLabelPosY+y_unit
+            RightStartpPosX = LeftEndpPosX + x_unit
+            RightEndpPosY = LeftStartpPosY+eyes_xy
+            RightEndpPosX = RightStartpPosX+eyes_xy
+            batch[RightStartpPosY:RightEndpPosY, RightStartpPosX:RightEndpPosX] = right_eye_cropped
+            hpLabelPosY = RightEndpPosY+y_unit
+            hpLabelPosX = x_unit
+            cv2.putText(batch,"Head Pose Estimation model output : ", (hpLabelPosX, hpLabelPosY), \
+                cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0,215,255), 2)
+        
+            hpPosY = hpLabelPosY+y_unit
+            hpPosX = x_unit
+            hpCoord = "yaw : {0:.2f} , pitch : {0:.2f} , roll : {0:.2f}".\
+                format(headp_coord[0],headp_coord[1],headp_coord[2])
+            cv2.putText(batch,hpCoord, (hpPosX, hpPosY), \
+                cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0,215,255), 2)
+
+            geLabelPosY = hpPosY+y_unit
+            geLabelPosX = x_unit
+            cv2.putText(batch,"Gaze Estimation model output : ", (geLabelPosX, geLabelPosY), \
+                cv2.FONT_HERSHEY_SIMPLEX, 0.9, (130,0,75), 2)
+        
+            gePosY = geLabelPosY+y_unit
+            gePosX = x_unit
+            geCoord = "x : {0:.2f} , y : {0:.2f} , z : {0:.2f}".\
+                format(gaze_coord[0],gaze_coord[1],gaze_coord[2])
+            cv2.putText(batch,geCoord, (gePosX, gePosY), \
+                cv2.FONT_HERSHEY_SIMPLEX, 0.9, (130,0,75), 2)
+        
+            cv2.rectangle(batch, (faced_coord[0] , faced_coord[1]), \
+                (faced_coord[2], faced_coord[3]),(0,0,255), 2)
+        
+        
+        batch = cv2.resize(batch, (900,500))
+        cv2.imshow("Gaze Computer Pointer Controller", batch)  
 
 def infer_on_stream(args):
 
     input_type = args.input_type
     input_file = args.input
     threshold = args.prob_threshold
+    Print_flag = args.print_output
 
     # Loading Face Detection model
     face_detection_model = FaceDetection(args.fd_model)
@@ -75,6 +153,9 @@ def infer_on_stream(args):
     # Loading Gaze Estimation
     GazeEstimation_model = GazeEstimation(args.ge_model)
     GazeEstimation_model.load_model()
+
+    # Using the pyautogui library to control the mouse pointer
+    MouseControll = MouseController("medium", "fast")
 
     feed=InputFeeder(input_type, input_file)
     feed.load_data()
@@ -101,7 +182,6 @@ def infer_on_stream(args):
         facial_coords = LandmarksDetection_model.preprocess_output(facial_outputs)
         left_eye_coord, right_eye_coord, left_eye_cropped, right_eye_cropped = \
             LandmarksDetection_model.getEyesCrop(facial_coords)
-
         # Running inference Gaze Estimation model
         #  to get the coordinates of gaze direction vector
         gase_inputs={
@@ -114,23 +194,18 @@ def infer_on_stream(args):
         gase_pframes = GazeEstimation_model.preprocess_input(gase_inputs)
         gase_outputs = GazeEstimation_model.predict(gase_pframes)
         gaze_coord = GazeEstimation_model.preprocess_output(gase_outputs)
-
- 
-
-        cv2.rectangle(batch, (faced_coord[0] , faced_coord[1]), \
-            (faced_coord[2], faced_coord[3]),(0,0,255), 1)
-
-        cv2.rectangle(cropped_face, ( left_eye_coord[0], left_eye_coord[1] ), \
-            ( left_eye_coord[2], left_eye_coord[3]), (0,255,0), 1)
-
-        cv2.rectangle(cropped_face, (right_eye_coord[0], right_eye_coord[1]), \
-            (right_eye_coord[2], right_eye_coord[3]), (0,255,0), 1)
         
-        cv2.imshow('Frame',batch)
+        
+        DisplayOutputs(
+            batch, cropped_face, left_eye_cropped,
+            right_eye_cropped, headp_coord, faced_coord,
+            left_eye_coord, right_eye_coord, gaze_coord,Print_flag)
+        
+        x = gaze_coord[0]
+        y = gaze_coord[1]
+        #print(x,y)
+        MouseControll.move(x, y)
 
-
-
-    out_video.release()
     feed.close()
 
 def main():
