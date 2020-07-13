@@ -64,7 +64,7 @@ pip3 install -r requirements.txt
 Please note that for the PyAutoGUI package you may need additional installations, depending on your OS, see the [documentation](https://pyautogui.readthedocs.io/en/latest/install.html)
 
 ### Project directory structure
-
+```
 ├── bin
 │   └── demo.mp4
 ├── models
@@ -111,7 +111,7 @@ Please note that for the PyAutoGUI package you may need additional installations
     ├── input_feeder.py
     ├── main.py
     ├── mouse_controller.py
-
+```
 
  * face_detection.py : 
 
@@ -189,11 +189,6 @@ source /opt/intel/openvino/bin/setupvars.sh -pyver 3.5
 source  environment/bin/activate
 ```
 
-* Step 2 :
-```
-source  environment/bin/activate
-```
-
 * Step 3 (Optional):
 
 Setting a path environment variable to the workspace path to help shorten launch command.
@@ -202,7 +197,7 @@ Setting a path environment variable to the workspace path to help shorten launch
 export MODELS=/path/to/your/workspace/computer_pointer_controller
 ```
 
-* Step 3 (Optional):
+* Step 4 :
 ```
 python3 $MODELS/src/main.py -fd $MODELS/models/intel/face-detection-adas-binary-0001/FP32-INT1/face-detection-adas-binary-0001 -hp $MODELS/models/intel/head-pose-estimation-adas-0001/FP32/head-pose-estimation-adas-0001 -fl $MODELS/models/intel/landmarks-regression-retail-0009/FP32/landmarks-regression-retail-0009 -ge $MODELS/models/intel/gaze-estimation-adas-0002/FP32/gaze-estimation-adas-0002 -it video -i $MODELS/bin/demo.mp4 -pi Y
 ```
@@ -210,7 +205,7 @@ python3 $MODELS/src/main.py -fd $MODELS/models/intel/face-detection-adas-binary-
 
 ## Documentation
 * The command line arguments that the project supports.
-
+```
 usage: main.py [-h] -fd FD_MODEL -hp HP_MODEL -fl FL_MODEL -ge GE_MODEL -it               INPUT_TYPE -i INPUT [-l CPU_EXTENSION] [-d DEVICE]
                [-pt PROB_THRESHOLD] [-pi PRINT_OUTPUT]
 
@@ -242,6 +237,7 @@ optional arguments:
   -pi PRINT_OUTPUT, --print_output PRINT_OUTPUT
                         Show output of intermediate models for visualization
                         if yes type 'Y' ,'N' instead
+```
 
 ## Benchmarks
 *TODO:* Include the benchmark results of running your model on multiple hardwares and multiple model precisions. Your benchmarks can include: model loading time, input/output processing time, model inference time etc.
@@ -260,4 +256,4 @@ For instance multiple people in the frame. will make the app confused about whic
 
 Lighting: A key problem in recognition is that the image of an object depends on the lighting conditions.an input Image/Frame, without enough or to Lighting can impact the model's accuracy, as implicitly make edge detection hard which lead the construction of a poor feature map/vector. Slight changes in pose and illumination produce large changes in object appearance. with that being said the place should have the amount of Lighting needed or using high-quality cameras that can serve the purpose
 
-One of the edge cases that I encountered during the app development, is that the landmark model detection output the center coordinates o the eyes, and to crop the eyes from the header image, we need to form a box by subtracting and adding an amount of pixel to x and y coordinates and slice the image array to get the eyes pixels. but during the subtraction step particularly value can get negative which will result in an error during the slicing step.to overcome that I had to take the absolute value and that worked just fine
+One of the edge cases that I encountered during the app development, is that the landmark model detection output the center coordinates of the eyes, and to crop the eyes from the head image, we need to form a box by subtracting and adding an amount of pixels to and from the x and y coordinates and slice the head image array to get the eyes pixels. but during the subtraction step particularly value can get negative which will result in an error during the slicing step.to overcome that I had to take the absolute value and that worked just fine.
