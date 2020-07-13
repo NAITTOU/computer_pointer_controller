@@ -9,6 +9,11 @@ import cv2
 
 import logging as log
 import numpy as np
+import line_profiler
+profile=line_profiler.LineProfiler()
+import atexit
+atexit.register(profile.print_stats)
+import pprint
 
 from argparse import ArgumentParser
 from input_feeder import InputFeeder
@@ -55,7 +60,10 @@ def build_argparser():
                         "(0.5 by default)")
     parser.add_argument("-pi", "--print_output", type=str, default="N",
                         help="Show output of intermediate models for visualization"
-                        " if yes type 'Y' ,'N' instead ")
+                        " if yes type 'Y' ,Leave empty instead ")
+    parser.add_argument("-ps", "--print_stats", type=str, default="N",
+                        help="print the time it takes for each layer for each used model"
+                        " if yes type 'Y' ,Leave empty instead ")
     return parser
 
 def DisplayOutputs(
@@ -129,14 +137,49 @@ def DisplayOutputs(
         
         
         batch = cv2.resize(batch, (900,500))
-        cv2.imshow("Gaze Computer Pointer Controller", batch)  
+        cv2.imshow("Gaze Computer Pointer Controller", batch)
 
+def DisplayLayerwisePerformance(
+        face_detection_model,Head_PoseEstimation_model,
+        LandmarksDetection_model,GazeEstimation_model,print_stats
+        ):
+        
+        if print_stats.lower() == "y" :
+            pp = pprint.PrettyPrinter(indent=4)
+            
+            print("---------------------------------------------------")
+            print("The time it takes for each layer in the \
+                face-detection-adas-binary-0001 model")
+            pp.pprint(face_detection_model.LayerwisePerformanceStats())
+            print("---------------------------------------------------")
+
+            print("---------------------------------------------------")
+            print("The time it takes for each layer in the \
+                head-pose-estimation-adas-0001 model")
+            pp.pprint(Head_PoseEstimation_model.LayerwisePerformanceStats())
+            print("---------------------------------------------------")
+
+            print("---------------------------------------------------")
+            print("The time it takes for each layer in the \
+                landmarks-regression-retail-0009 model")
+            pp.pprint(LandmarksDetection_model.LayerwisePerformanceStats())
+            print("---------------------------------------------------")
+
+            print("---------------------------------------------------")
+            print("The time it takes for each layer in the \
+                gaze-estimation-adas-0002 model")
+            pp.pprint(GazeEstimation_model.LayerwisePerformanceStats())
+            print("---------------------------------------------------")
+        
+
+@profile
 def infer_on_stream(args):
 
     input_type = args.input_type
     input_file = args.input
     threshold = args.prob_threshold
     Print_flag = args.print_output
+    print_stats = args.print_stats
     cpu_extension = args.cpu_extension
     device = args.device
 
@@ -197,7 +240,6 @@ def infer_on_stream(args):
         gase_outputs = GazeEstimation_model.predict(gase_pframes)
         gaze_coord = GazeEstimation_model.preprocess_output(gase_outputs)
         
-        
         DisplayOutputs(
             batch, cropped_face, left_eye_cropped,
             right_eye_cropped, headp_coord, faced_coord,
@@ -205,10 +247,14 @@ def infer_on_stream(args):
         
         x = gaze_coord[0]
         y = gaze_coord[1]
-        #print(x,y)
         MouseControll.move(x, y)
 
     feed.close()
+
+    DisplayLayerwisePerformance(
+        face_detection_model,Head_PoseEstimation_model,
+        LandmarksDetection_model,GazeEstimation_model,print_stats
+        )
 
 def main():
     """

@@ -162,3 +162,10 @@ class FacialLandmarksDetection:
             right_eye_coord[0]:right_eye_coord[2] ]
 
         return left_eye_coord, right_eye_coord, left_eye_cropped, right_eye_cropped
+    
+    
+    def LayerwisePerformanceStats(self):
+        '''
+        Return layerwise performance of the model
+        '''
+        return self.net_plugin.requests[0].get_perf_counts()

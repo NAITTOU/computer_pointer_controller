@@ -141,3 +141,10 @@ class HeadPoseEstimation:
             coords.append(np.squeeze(outputs[key]))
         
         return coords
+    
+
+    def LayerwisePerformanceStats(self):
+        '''
+        Return layerwise performance of the model
+        '''
+        return self.net_plugin.requests[0].get_perf_counts()

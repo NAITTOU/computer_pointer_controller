@@ -199,16 +199,16 @@ export MODELS=/path/to/your/workspace/computer_pointer_controller
 
 * Step 4 :
 ```
-python3 $MODELS/src/main.py -fd $MODELS/models/intel/face-detection-adas-binary-0001/FP32-INT1/face-detection-adas-binary-0001 -hp $MODELS/models/intel/head-pose-estimation-adas-0001/FP32/head-pose-estimation-adas-0001 -fl $MODELS/models/intel/landmarks-regression-retail-0009/FP32/landmarks-regression-retail-0009 -ge $MODELS/models/intel/gaze-estimation-adas-0002/FP32/gaze-estimation-adas-0002 -it video -i $MODELS/bin/demo.mp4 -pi Y
+python3 $MODELS/src/main.py -fd $MODELS/models/intel/face-detection-adas-binary-0001/FP32-INT1/face-detection-adas-binary-0001 -hp $MODELS/models/intel/head-pose-estimation-adas-0001/FP32/head-pose-estimation-adas-0001 -fl $MODELS/models/intel/landmarks-regression-retail-0009/FP32/landmarks-regression-retail-0009 -ge $MODELS/models/intel/gaze-estimation-adas-0002/FP32/gaze-estimation-adas-0002 -it video -i $MODELS/bin/demo.mp4 -pi Y -ps Y
 ```
 
 
 ## Documentation
 * The command line arguments that the project supports.
 ```
-usage: main.py [-h] -fd FD_MODEL -hp HP_MODEL -fl FL_MODEL -ge GE_MODEL 
-       -it INPUT_TYPE -i INPUT [-l CPU_EXTENSION] [-d DEVICE]
-       [-pt PROB_THRESHOLD] [-pi PRINT_OUTPUT]
+usage: main.py [-h] -fd FD_MODEL -hp HP_MODEL -fl FL_MODEL -ge GE_MODEL -it
+               INPUT_TYPE -i INPUT [-l CPU_EXTENSION] [-d DEVICE]
+               [-pt PROB_THRESHOLD] [-pi PRINT_OUTPUT] [-ps PRINT_STATS]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -227,7 +227,7 @@ optional arguments:
                         Path to image or video file ,Leave empty for cam
   -l CPU_EXTENSION, --cpu_extension CPU_EXTENSION
                         MKLDNN (CPU)-targeted custom layers.Absolute path to a
-                        shared library with the kernels impl.
+                        shared library with thekernels impl.
   -d DEVICE, --device DEVICE
                         Specify the target device to infer on: CPU, GPU, FPGA
                         or MYRIAD is acceptable. Sample will look for a
@@ -237,20 +237,158 @@ optional arguments:
                         default)
   -pi PRINT_OUTPUT, --print_output PRINT_OUTPUT
                         Show output of intermediate models for visualization
-                        if yes type 'Y' ,'N' instead
+                        if yes type 'Y' ,Leave empty instead
+  -ps PRINT_STATS, --print_stats PRINT_STATS
+                        print the time it takes for each layer for each used
+                        model if yes type 'Y' ,Leave empty instead
 ```
 
 ## Benchmarks
-*TODO:* Include the benchmark results of running your model on multiple hardwares and multiple model precisions. Your benchmarks can include: model loading time, input/output processing time, model inference time etc.
+
+We will be using a line profiler. A line profiler tells us the time it takes to run each line of code. In particular we will be using [this](https://github.com/rkern/line_profiler) line profiler.
+
+We will focus on seeing the benchmark of the running times of different parts that involve the model optimization such as loading the model, inference , the input/output preprocessing.
+
+The following benchmark was conducted using : 
+Processor: Intel(R) Core(TM) i7-8650U CPU @ 1.90GHz (8 CPUs), ~2.1GHz
+
+* FP32
+
+```
+Total time: 59.3433 s
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+                                          
+                                                     # Loading face-detection-adas-binary-0001 model
+   150         1     153642.0 153642.0      0.3      face_detection_model.load_model()
+                                              
+                                                     # Loading head-pose-estimation-adas-0001 model
+   154         1      84094.0  84094.0      0.1      Head_PoseEstimation_model.load_model()
+                                              
+                                                     # Loading landmarks-regression-retail-0009 model
+   158         1      71441.0  71441.0      0.1      LandmarksDetection_model.load_model()
+                                             
+                                                     # Loading gaze-estimation-adas-0002 model
+   162         1     102578.0 102578.0      0.2      GazeEstimation_model.load_model()
+                                                                               
+                                                     # Preprocess input of face-detection-adas-binary-0001 model
+   175       595     789113.0   1326.2      1.3      faced_pframe = face_detection_model.preprocess_input(batch)
+
+                                                     # Running inference on face-detection-adas-binary-0001 model
+   176       595   13921768.0  23397.9     23.5      faced_outputs = face_detection_model.predict(faced_pframe)
+
+                                                     # Preprocess output of face-detection-adas-binary-0001 model
+   177       595     289310.0    486.2      0.5      faced_coord = face_detection_model.preprocess_output(faced_outputs,threshold)
+   
+                                                     # Preprocess input of head-pose-estimation-adas-0001 model                                        
+   181       595      60960.0    102.5      0.1      headp_pframe = Head_PoseEstimation_model.preprocess_input(cropped_face)
+
+                                                     # Running inference on head-pose-estimation-adas-0001 model
+   182       595    1620794.0   2724.0      2.7      headp_outputs = Head_PoseEstimation_model.predict(headp_pframe)
+
+                                                     # Preprocess output of head-pose-estimation-adas-0001 model
+   183       595      22139.0     37.2      0.0      headp_coord = Head_PoseEstimation_model.preprocess_output(headp_outputs)
+   
+                                                     # Preprocess input of landmarks-regression-retail-0009 model 
+   187       595      49365.0     83.0      0.1      facial_pframe = LandmarksDetection_model.preprocess_input(cropped_face)
+
+                                                     # Running inference on landmarks-regression-retail-0009 model
+   188       595     654915.0   1100.7      1.1      facial_outputs = LandmarksDetection_model.predict(facial_pframe)
+
+                                                     # Preprocess output of landmarks-regression-retail-0009 model
+   189       595      75215.0    126.4      0.1      facial_coords = LandmarksDetection_model.preprocess_output(facial_outputs)
+ 
+                                                     # Preprocess input of gaze-estimation-adas-0002 model model 
+   201       595      39622.0     66.6      0.1      gase_pframes = GazeEstimation_model.preprocess_input(gase_inputs)
+
+                                                     # Running inference on gaze-estimation-adas-0002 model model
+   202       595    1535140.0   2580.1      2.6      gase_outputs = GazeEstimation_model.predict(gase_pframes)
+
+                                                     # Preprocess output of gaze-estimation-adas-0002 model model
+   203       595      11177.0     18.8      0.0      gaze_coord = GazeEstimation_model.preprocess_output(gase_outputs)
+```
+
+* FP16-INT8
+
+```
+Total time: 55.2688 s
+
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+
+                                              
+                                                     # Loading face-detection-adas-binary-0001 model
+   150         1     157246.0 157246.0      0.3      face_detection_model.load_model()
+                                              
+                                                     # Loading head-pose-estimation-adas-0001 model
+   154         1     187035.0 187035.0      0.3      Head_PoseEstimation_model.load_model()
+                                              
+                                                     # Loading landmarks-regression-retail-0009 model
+   158         1     101399.0 101399.0      0.2      LandmarksDetection_model.load_model()
+                                              
+                                                     # Loading gaze-estimation-adas-0002 model
+   162         1     234952.0 234952.0      0.4      GazeEstimation_model.load_model()
+
+                                              
+                                                     # Preprocess input of face-detection-adas-binary-0001 model
+   175       595     634815.0   1066.9      1.1      faced_pframe = face_detection_model.preprocess_input(batch)
+
+                                                     # Running inference on face-detection-adas-binary-0001 model
+   176       595   11061677.0  18591.1     20.0      faced_outputs = face_detection_model.predict(faced_pframe)
+
+                                                     # Preprocess output of face-detection-adas-binary-0001 model
+   177       595     229916.0    386.4      0.4      faced_coord = face_detection_model.preprocess_output(faced_outputs,threshold)
+                                             
+                                                     # Preprocess input of head-pose-estimation-adas-0001 model 
+   181       595      50966.0     85.7      0.1      headp_pframe = Head_PoseEstimation_model.preprocess_input(cropped_face)
+
+                                                     # Running inference on head-pose-estimation-adas-0001 model
+   182       595    1176896.0   1978.0      2.1      headp_outputs = Head_PoseEstimation_model.predict(headp_pframe)
+   
+                                                     # Preprocess output of head-pose-estimation-adas-0001 model
+   183       595      17451.0     29.3      0.0      headp_coord = Head_PoseEstimation_model.preprocess_output(headp_outputs)
+                                              
+                                                     # Preprocess input of landmarks-regression-retail-0009 model
+   187       595      40133.0     67.5      0.1      facial_pframe = LandmarksDetection_model.preprocess_input(cropped_face)
+
+                                                     # Running inference on landmarks-regression-retail-0009 model
+   188       595     535641.0    900.2      1.0      facial_outputs = LandmarksDetection_model.predict(facial_pframe)
+
+                                                     # Preprocess output of landmarks-regression-retail-0009 model
+   189       595      63686.0    107.0      0.1      facial_coords = LandmarksDetection_model.preprocess_output(facial_outputs)
+
+                                                     # Preprocess input of gaze-estimation-adas-0002 model model 
+   201       595      34422.0     57.9      0.1      gase_pframes = GazeEstimation_model.preprocess_input(gase_inputs)
+
+                                                     # Running inference on gaze-estimation-adas-0002 model model
+   202       595    1060332.0   1782.1      1.9      gase_outputs = GazeEstimation_model.predict(gase_pframes)
+
+                                                      # Preprocess output of gaze-estimation-adas-0002 model model
+   203       595       9484.0     15.9      0.0      gaze_coord = GazeEstimation_model.preprocess_output(gase_outputs)
+   ```
+
 
 ## Results
-*TODO:* Discuss the benchmark results and explain why you are getting the results you are getting. For instance, explain why there is difference in inference time for FP32, FP16 and INT8 models.
 
-## Stand Out Suggestions
-This is where you can provide information about the stand out suggestions that you have attempted.
+Because the face-detection-adas-binary-0001 the model has only IR file in FP32-INT1 precision, we are going to exclude it from this performance comparison discussion as we changing the precision.
+
+For the things, we can notice is that as we changing the precision from FP32 to FP16-INT8 are : 
+
+-  Total time drops from 59.3433 s to 55.2688 s.
+-  The loading time went up, which was not expected.
+-  The inference time went down.
+
+Normally the quantized model takes less time to load than the original model because the amount of space required for the weight was reduced.
+
+However, depending on your hardware and the model you use, you may find that the quantized model has worse performance than the original model as you can see that this is the result I got in the loading step as FP32 is more optimize for CPU than FP16-INT8. However, some hardware (and software) configurations cannot perform INT8 operations as optimally as FLOAT operations. 
+
+When you run the same performance benchmark on your own hardware you may get different results, because my underlying hardware is different.
+
 
 ### Async Inference
-using Async Inference can improve the overall frame-rate of the application because rather than wait for inference to complete, the app can continue capturing the next frame thus hiding latency and run parallel inference requests which require more power.
+Using Async Inference can improve the overall frame-rate of the application because rather than wait for inference to complete, the app can continue capturing the next frame thus hiding latency and run parallel inference requests which requires more power.
 
 ### Edge Cases
 For instance multiple people in the frame. will make the app confused about which face we will take its gaze to move our mouse pointer, for that I chose to take face that the model has the greatest confidence value.

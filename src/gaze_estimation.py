@@ -146,3 +146,10 @@ class GazeEstimation:
         
         coord = np.squeeze(outputs)
         return coord
+    
+    
+    def LayerwisePerformanceStats(self):
+        '''
+        Return layerwise performance of the model
+        '''
+        return self.net_plugin.requests[0].get_perf_counts()

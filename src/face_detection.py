@@ -170,3 +170,9 @@ class FaceDetection:
         cropped_face = self.img[ymin:ymax, xmin:xmax]
 
         return cropped_face
+
+    def LayerwisePerformanceStats(self):
+        '''
+        Return layerwise performance of the model
+        '''
+        return self.net_plugin.requests[0].get_perf_counts()
