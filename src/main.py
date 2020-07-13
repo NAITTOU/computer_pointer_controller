@@ -70,106 +70,112 @@ def DisplayOutputs(
     batch, cropped_face, left_eye_cropped,
     right_eye_cropped, headp_coord, faced_coord,
     left_eye_coord, right_eye_coord, gaze_coord,Print_flag):
+    '''
+    Visualize intermediate models output.
+    '''
         
-        if Print_flag.lower() == "y" :
+    if Print_flag.lower() == "y" :
 
-            cropped_face = cv2.resize(cropped_face, (300, 300))
-            left_eye_cropped = cv2.resize(left_eye_cropped, (150, 150))
-            right_eye_cropped = cv2.resize(right_eye_cropped, (150, 150)) 
-            face_xy = cropped_face.shape[0]
-            eyes_xy = right_eye_cropped.shape[0]
-            y_unit = 40
-            x_unit = 10
+        cropped_face = cv2.resize(cropped_face, (300, 300))
+        left_eye_cropped = cv2.resize(left_eye_cropped, (150, 150))
+        right_eye_cropped = cv2.resize(right_eye_cropped, (150, 150)) 
+        face_xy = cropped_face.shape[0]
+        eyes_xy = right_eye_cropped.shape[0]
+        y_unit = 40
+        x_unit = 10
             
-            fdLabelPosY = y_unit
-            fdLabelPosX = x_unit
-            cv2.putText(batch,"Face detection model output : ", (fdLabelPosX, fdLabelPosY), \
-                cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0,0,255), 2)
+        fdLabelPosY = y_unit
+        fdLabelPosX = x_unit
+        cv2.putText(batch,"Face detection model output : ", (fdLabelPosX, fdLabelPosY), \
+            cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0,0,255), 2)
 
-            faceStartpPosY = fdLabelPosY+y_unit
-            faceStartpPosX = x_unit
-            faceEndpPosY = faceStartpPosY+face_xy
-            faceEndpPosX = faceStartpPosX+face_xy
-            batch[faceStartpPosY:faceEndpPosY, faceStartpPosX:faceEndpPosX] \
-                = cropped_face
+        faceStartpPosY = fdLabelPosY+y_unit
+        faceStartpPosX = x_unit
+        faceEndpPosY = faceStartpPosY+face_xy
+        faceEndpPosX = faceStartpPosX+face_xy
+        batch[faceStartpPosY:faceEndpPosY, faceStartpPosX:faceEndpPosX] \
+            = cropped_face
 
-            flLabelPosY = faceEndpPosY+y_unit
-            flLabelPosX = x_unit
-            cv2.putText(batch,"Facial Landmarks Detection model output : ", (flLabelPosX, flLabelPosY), \
-                cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0,255,0), 2)
-            LeftStartpPosY = flLabelPosY+y_unit
-            LeftStartpPosX = x_unit
-            LeftEndpPosY = LeftStartpPosY+eyes_xy
-            LeftEndpPosX = LeftStartpPosX+eyes_xy
-            batch[LeftStartpPosY:LeftEndpPosY, LeftStartpPosX:LeftEndpPosX] = left_eye_cropped
+        flLabelPosY = faceEndpPosY+y_unit
+        flLabelPosX = x_unit
+        cv2.putText(batch,"Facial Landmarks Detection model output : ", (flLabelPosX, flLabelPosY), \
+            cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0,255,0), 2)
+        LeftStartpPosY = flLabelPosY+y_unit
+        LeftStartpPosX = x_unit
+        LeftEndpPosY = LeftStartpPosY+eyes_xy
+        LeftEndpPosX = LeftStartpPosX+eyes_xy
+        batch[LeftStartpPosY:LeftEndpPosY, LeftStartpPosX:LeftEndpPosX] = left_eye_cropped
 
-            RightStartpPosY = flLabelPosY+y_unit
-            RightStartpPosX = LeftEndpPosX + x_unit
-            RightEndpPosY = LeftStartpPosY+eyes_xy
-            RightEndpPosX = RightStartpPosX+eyes_xy
-            batch[RightStartpPosY:RightEndpPosY, RightStartpPosX:RightEndpPosX] = right_eye_cropped
-            hpLabelPosY = RightEndpPosY+y_unit
-            hpLabelPosX = x_unit
-            cv2.putText(batch,"Head Pose Estimation model output : ", (hpLabelPosX, hpLabelPosY), \
-                cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0,215,255), 2)
+        RightStartpPosY = flLabelPosY+y_unit
+        RightStartpPosX = LeftEndpPosX + x_unit
+        RightEndpPosY = LeftStartpPosY+eyes_xy
+        RightEndpPosX = RightStartpPosX+eyes_xy
+        batch[RightStartpPosY:RightEndpPosY, RightStartpPosX:RightEndpPosX] = right_eye_cropped
+        hpLabelPosY = RightEndpPosY+y_unit
+        hpLabelPosX = x_unit
+        cv2.putText(batch,"Head Pose Estimation model output : ", (hpLabelPosX, hpLabelPosY), \
+            cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0,215,255), 2)
         
-            hpPosY = hpLabelPosY+y_unit
-            hpPosX = x_unit
-            hpCoord = "yaw : {0:.2f} , pitch : {0:.2f} , roll : {0:.2f}".\
-                format(headp_coord[0],headp_coord[1],headp_coord[2])
-            cv2.putText(batch,hpCoord, (hpPosX, hpPosY), \
-                cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0,215,255), 2)
+        hpPosY = hpLabelPosY+y_unit
+        hpPosX = x_unit
+        hpCoord = "yaw : {0:.2f} , pitch : {0:.2f} , roll : {0:.2f}".\
+            format(headp_coord[0],headp_coord[1],headp_coord[2])
+        cv2.putText(batch,hpCoord, (hpPosX, hpPosY), \
+            cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0,215,255), 2)
 
-            geLabelPosY = hpPosY+y_unit
-            geLabelPosX = x_unit
-            cv2.putText(batch,"Gaze Estimation model output : ", (geLabelPosX, geLabelPosY), \
-                cv2.FONT_HERSHEY_SIMPLEX, 0.9, (130,0,75), 2)
+        geLabelPosY = hpPosY+y_unit
+        geLabelPosX = x_unit
+        cv2.putText(batch,"Gaze Estimation model output : ", (geLabelPosX, geLabelPosY), \
+            cv2.FONT_HERSHEY_SIMPLEX, 0.9, (130,0,75), 2)
         
-            gePosY = geLabelPosY+y_unit
-            gePosX = x_unit
-            geCoord = "x : {0:.2f} , y : {0:.2f} , z : {0:.2f}".\
-                format(gaze_coord[0],gaze_coord[1],gaze_coord[2])
-            cv2.putText(batch,geCoord, (gePosX, gePosY), \
-                cv2.FONT_HERSHEY_SIMPLEX, 0.9, (130,0,75), 2)
+        gePosY = geLabelPosY+y_unit
+        gePosX = x_unit
+        geCoord = "x : {0:.2f} , y : {0:.2f} , z : {0:.2f}".\
+            format(gaze_coord[0],gaze_coord[1],gaze_coord[2])
+        cv2.putText(batch,geCoord, (gePosX, gePosY), \
+            cv2.FONT_HERSHEY_SIMPLEX, 0.9, (130,0,75), 2)
         
-            cv2.rectangle(batch, (faced_coord[0] , faced_coord[1]), \
-                (faced_coord[2], faced_coord[3]),(0,0,255), 2)
+        cv2.rectangle(batch, (faced_coord[0] , faced_coord[1]), \
+            (faced_coord[2], faced_coord[3]),(0,0,255), 2)
         
         
-        batch = cv2.resize(batch, (900,500))
-        cv2.imshow("Gaze Computer Pointer Controller", batch)
+    batch = cv2.resize(batch, (900,500))
+    cv2.imshow("Gaze Computer Pointer Controller", batch)
 
 def DisplayLayerwisePerformance(
         face_detection_model,Head_PoseEstimation_model,
         LandmarksDetection_model,GazeEstimation_model,print_stats
         ):
+        '''
+        Print the time it takes for each layer for each used model.
+        '''
         
         if print_stats.lower() == "y" :
             pp = pprint.PrettyPrinter(indent=4)
             
-            print("---------------------------------------------------")
-            print("The time it takes for each layer in the \
-                face-detection-adas-binary-0001 model")
+            log.info("---------------------------------------------------")
+            log.info("The time it takes for each layer in the" \
+                "face-detection-adas-binary-0001 model")
             pp.pprint(face_detection_model.LayerwisePerformanceStats())
-            print("---------------------------------------------------")
+            log.info("---------------------------------------------------")
 
-            print("---------------------------------------------------")
-            print("The time it takes for each layer in the \
-                head-pose-estimation-adas-0001 model")
+            log.info("---------------------------------------------------")
+            log.info("The time it takes for each layer in the" \
+                "head-pose-estimation-adas-0001 model")
             pp.pprint(Head_PoseEstimation_model.LayerwisePerformanceStats())
-            print("---------------------------------------------------")
+            log.info("---------------------------------------------------")
 
-            print("---------------------------------------------------")
-            print("The time it takes for each layer in the \
-                landmarks-regression-retail-0009 model")
+            log.info("---------------------------------------------------")
+            log.info("The time it takes for each layer in the" \
+                "landmarks-regression-retail-0009 model")
             pp.pprint(LandmarksDetection_model.LayerwisePerformanceStats())
-            print("---------------------------------------------------")
+            log.info("---------------------------------------------------")
 
-            print("---------------------------------------------------")
-            print("The time it takes for each layer in the \
-                gaze-estimation-adas-0002 model")
+            log.info("---------------------------------------------------")
+            log.info("The time it takes for each layer in the" \
+                "gaze-estimation-adas-0002 model")
             pp.pprint(GazeEstimation_model.LayerwisePerformanceStats())
-            print("---------------------------------------------------")
+            log.info("---------------------------------------------------")
         
 
 @profile
@@ -211,19 +217,34 @@ def infer_on_stream(args):
 
         # Running inference on Face Detection model to get the face coordinates
         faced_pframe = face_detection_model.preprocess_input(batch)
-        faced_outputs = face_detection_model.predict(faced_pframe)
+        faced_inputs={
+
+          face_detection_model.input_name : faced_pframe,
+          
+        }
+        faced_outputs = face_detection_model.predict(faced_inputs)
         faced_coord = face_detection_model.preprocess_output(faced_outputs,threshold)
         cropped_face = face_detection_model.getFaceCrop(faced_coord)
 
         # Running inference on Head Pose Estimation model to get head pose angle
         headp_pframe = Head_PoseEstimation_model.preprocess_input(cropped_face)
-        headp_outputs = Head_PoseEstimation_model.predict(headp_pframe)
+        headp_inputs={
+
+          Head_PoseEstimation_model.input_name : headp_pframe,
+          
+        }
+        headp_outputs = Head_PoseEstimation_model.predict(headp_inputs)
         headp_coord = Head_PoseEstimation_model.preprocess_output(headp_outputs)
 
         # Running inference on Facial Landmarks Detection model
         #  to get cropped left and right eye
         facial_pframe = LandmarksDetection_model.preprocess_input(cropped_face)
-        facial_outputs = LandmarksDetection_model.predict(facial_pframe)
+        facial_inputs={
+
+          LandmarksDetection_model.input_name : facial_pframe,
+          
+        }
+        facial_outputs = LandmarksDetection_model.predict(facial_inputs)
         facial_coords = LandmarksDetection_model.preprocess_output(facial_outputs)
         left_eye_coord, right_eye_coord, left_eye_cropped, right_eye_cropped = \
             LandmarksDetection_model.getEyesCrop(facial_coords)
