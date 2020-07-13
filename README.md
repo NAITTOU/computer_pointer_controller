@@ -110,6 +110,7 @@ Please note that for the PyAutoGUI package you may need additional installations
     ├── head_pose_estimation.py
     ├── input_feeder.py
     ├── main.py
+    ├── model.py
     ├── mouse_controller.py
 ```
 
