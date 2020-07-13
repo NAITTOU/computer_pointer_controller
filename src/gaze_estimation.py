@@ -88,10 +88,10 @@ class GazeEstimation:
             
             log.warning("Unsupported layers found: {}".format(unsupported_layers))
             
-            if cpu_extension and "CPU" in self.device:
+            if self.extensions and "CPU" in self.device:
                 
                 log.info("Adding a CPU extension ...")
-                self.plugin.add_extension(cpu_extension, self.device)
+                self.plugin.add_extension(self.extensions, self.device)
                 log.info("The CPU extension was added")
                 
                 supported_layers = self.plugin.query_network(network=self.network, device_name=self.device)

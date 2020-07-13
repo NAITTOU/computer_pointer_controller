@@ -36,7 +36,7 @@ def build_argparser():
     parser.add_argument("-ge", "--ge_model", required=True, type=str,
                         help="Path to the Gaze Estimation model.")
     parser.add_argument("-it", "--input_type", required=True, type=str,
-                        help="The type of input. Can be 'video' for video .\
+                        help="The type of input. Can be 'video' for video \
                         file, 'image' for image file,or 'cam' to use webcam feed")
     parser.add_argument("-i", "--input", required=True, type=str,
                         help="Path to image or video file ,Leave empty for cam")
@@ -137,21 +137,23 @@ def infer_on_stream(args):
     input_file = args.input
     threshold = args.prob_threshold
     Print_flag = args.print_output
+    cpu_extension = args.cpu_extension
+    device = args.device
 
     # Loading Face Detection model
-    face_detection_model = FaceDetection(args.fd_model)
+    face_detection_model = FaceDetection(args.fd_model,device,cpu_extension)
     face_detection_model.load_model()
 
     # Loading Head Pose Estimation model
-    Head_PoseEstimation_model = HeadPoseEstimation(args.hp_model)
+    Head_PoseEstimation_model = HeadPoseEstimation(args.hp_model,device,cpu_extension)
     Head_PoseEstimation_model.load_model()
 
     # Loading Facial Landmarks Detection model
-    LandmarksDetection_model = FacialLandmarksDetection(args.fl_model)
+    LandmarksDetection_model = FacialLandmarksDetection(args.fl_model,device,cpu_extension)
     LandmarksDetection_model.load_model()
 
     # Loading Gaze Estimation
-    GazeEstimation_model = GazeEstimation(args.ge_model)
+    GazeEstimation_model = GazeEstimation(args.ge_model,device,cpu_extension)
     GazeEstimation_model.load_model()
 
     # Using the pyautogui library to control the mouse pointer
