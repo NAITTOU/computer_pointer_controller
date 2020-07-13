@@ -154,7 +154,7 @@ These can be downloaded using the model downloader. The models you will need are
 
 [Facial Landmarks Detection](https://docs.openvinotoolkit.org/latest/_models_intel_landmarks_regression_retail_0009_description_landmarks_regression_retail_0009.html)
 
-The followings are the commands to use to download each model, the files will be placed "models/" folder :
+The followings are the commands to use to download each model, the files will be placed in the "models/" folder :
 
 * face-detection-adas-binary-0001
 ```
@@ -206,8 +206,9 @@ python3 $MODELS/src/main.py -fd $MODELS/models/intel/face-detection-adas-binary-
 ## Documentation
 * The command line arguments that the project supports.
 ```
-usage: main.py [-h] -fd FD_MODEL -hp HP_MODEL -fl FL_MODEL -ge GE_MODEL -it               INPUT_TYPE -i INPUT [-l CPU_EXTENSION] [-d DEVICE]
-               [-pt PROB_THRESHOLD] [-pi PRINT_OUTPUT]
+usage: main.py [-h] -fd FD_MODEL -hp HP_MODEL -fl FL_MODEL -ge GE_MODEL 
+       -it INPUT_TYPE -i INPUT [-l CPU_EXTENSION] [-d DEVICE]
+       [-pt PROB_THRESHOLD] [-pi PRINT_OUTPUT]
 
 optional arguments:
   -h, --help            show this help message and exit
