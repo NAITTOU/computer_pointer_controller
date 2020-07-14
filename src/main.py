@@ -205,7 +205,7 @@ def infer_on_stream(args):
     GazeEstimation_model = GazeEstimation(args.ge_model,device,cpu_extension)
     GazeEstimation_model.load_model()
 
-    # Using the pyautogui library to control the mouse pointer
+    # Instantiating a pyautogui library object to control the mouse pointer
     MouseControll = MouseController("medium", "fast")
 
     feed=InputFeeder(input_type, input_file)
@@ -268,6 +268,7 @@ def infer_on_stream(args):
         
         x = gaze_coord[0]
         y = gaze_coord[1]
+        # Moving the mouse pointer according to x,y
         MouseControll.move(x, y)
 
     feed.close()

@@ -46,10 +46,10 @@ To create a virtual environment,use the following command :
 python3 -m venv environmentname
 ```
 
-To create a virtual environment
+To activate a virtual environment : 
 
 ```
-source  environment/bin/activate
+source  environmentname/bin/activate
 ```
 
 #### Required libraries
@@ -383,7 +383,7 @@ For the things, we can notice is that as we changing the precision from FP32 to 
 
 Normally the quantized model takes less time to load than the original model because the amount of space required for the weight was reduced.
 
-However, depending on your hardware and the model you use, you may find that the quantized model has worse performance than the original model as you can see that this is the result I got in the loading step as FP32 is more optimize for CPU than FP16-INT8. However, some hardware (and software) configurations cannot perform INT8 operations as optimally as FLOAT operations. 
+However, depending on your hardware and the model you use, you may find that the quantized model has worse performance than the original model as you can see that this is the result I got in the loading step as FP32 is more optimized for CPU than FP16-INT8. However, some hardware (and software) configurations cannot perform INT8 operations as optimally as FLOAT operations. 
 
 When you run the same performance benchmark on your own hardware you may get different results, because my underlying hardware is different.
 
